@@ -1,12 +1,13 @@
-import React from 'react'
-import { useDispatch } from 'react-redux'
-import { Link } from 'react-router-dom'
+import React from 'react';
+import { useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { fetchNotifications } from '../features/notifications/notificationsSlice';
 export const Navbar = () => {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   const fetchNewNotifications = () => {
-    dispatch(fetchNotifications())
-  }
+    dispatch(fetchNotifications());
+  };
   return (
     <nav>
       <section>
@@ -24,5 +25,5 @@ export const Navbar = () => {
         </div>
       </section>
     </nav>
-  )
-}
+  );
+};

@@ -1,4 +1,10 @@
-import React, { useReducer, useCallback, useState, useRef } from "react";
+import React, {
+  useReducer,
+  useCallback,
+  useState,
+  useRef,
+  useEffect,
+} from 'react';
 
 const initialState = { count: 0 };
 function init(initialCount) {
@@ -7,11 +13,11 @@ function init(initialCount) {
 
 function reducer(state, action) {
   switch (action.type) {
-    case "increment":
+    case 'increment':
       return { count: state.count + 1 };
-    case "decrement":
+    case 'decrement':
       return { count: state.count - 1 };
-    case "reset": {
+    case 'reset': {
       return init(action.payload);
     }
     default:
@@ -22,7 +28,7 @@ function reducer(state, action) {
 export function Counter({ initialCount }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const mIncrement = useCallback(() => {
-    dispatch({ type: "increment" });
+    dispatch({ type: 'increment' });
   }, []);
   const [count, setCount] = useState(initialCount);
   return (
@@ -33,12 +39,12 @@ export function Counter({ initialCount }) {
       <button onClick={() => setCount(count - 1)}>-</button>
       <p>{state.count}</p>
       <button
-        onClick={() => dispatch({ type: "reset", payload: initialCount })}
+        onClick={() => dispatch({ type: 'reset', payload: initialCount })}
       >
         reset
       </button>
       <button onClick={mIncrement}>+</button>
-      <button onClick={() => dispatch({ type: "decrement" })}>-</button>
+      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
     </div>
   );
 }
@@ -54,4 +60,34 @@ export function TextInputWithFocusButton() {
       <button onClick={onButtonClick}>focus</button>
     </>
   );
+}
+
+export function IntervalCounter() {
+  const [count, setCount] = useState(0);
+  /**
+   * 定时器会被不断重置
+   */
+  // useEffect(() => {
+  //   console.log('init');
+  //   const id = setInterval(() => {
+  //     setCount(count + 1);
+  //   }, 1000);
+  //   return () => {
+  //     console.log('clear');
+  //     clearInterval(id);
+  //   };
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [count]);
+  useEffect(() => {
+    console.log('init');
+    const id = setInterval(() => {
+      setCount((c) => c + 1);
+    }, 1000);
+    return () => {
+      console.log('clear');
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <h1>{count}</h1>;
 }

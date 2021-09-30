@@ -1,17 +1,26 @@
-import React from 'react'
-import { Navbar } from './components/NavBar'
-// import { Counter, TextInputWithFocusButton } from './pages/Hook/HookTest'
+import React from 'react';
+import { Navbar } from './components/NavBar';
+import {
+  Counter,
+  TextInputWithFocusButton,
+  IntervalCounter,
+} from './pages/Hook/HookTest';
 // import { Fancy } from './pages/ForwardRef/ForwardRef'
 // import { Counter } from './features/counter/Counter'
-import { AddPostForm } from './features/posts/AddPostForm'
-import { PostsList } from './features/posts/PostsList'
-import { SinglePostPage } from './features/posts/SinglePostPage'
-import { EditPostForm } from './features/posts/EditPostForm'
-import { UsersList } from './features/users/UsersList'
-import { UserPage } from './features/users/UserPage'
-import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom'
-import './App.css'
-import './pages/Hook/UseSelector'
+import { AddPostForm } from './features/posts/AddPostForm';
+import { PostsList } from './features/posts/PostsList';
+import { SinglePostPage } from './features/posts/SinglePostPage';
+import { EditPostForm } from './features/posts/EditPostForm';
+import { UsersList } from './features/users/UsersList';
+import { UserPage } from './features/users/UserPage';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Redirect,
+} from 'react-router-dom';
+import './App.css';
+import './pages/Hook/UseSelector';
 
 class App extends React.Component {
   render() {
@@ -25,8 +34,11 @@ class App extends React.Component {
               path="/"
               render={() => (
                 <React.Fragment>
-                  <AddPostForm />
-                  <PostsList />
+                  {/* <AddPostForm />
+                  <PostsList /> 
+                  <TextInputWithFocusButton />
+                  <Counter initialCount={1} />*/}
+                  <IntervalCounter />
                 </React.Fragment>
               )}
             />
@@ -41,8 +53,8 @@ class App extends React.Component {
         <Fancy></Fancy> */}
         </div>
       </Router>
-    )
+    );
   }
 }
 
-export default App
+export default App;

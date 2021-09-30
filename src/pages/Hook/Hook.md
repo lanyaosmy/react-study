@@ -35,7 +35,7 @@ const [当前state, 更新state的函数] = useState(初始值);
 ```
 
 ```js
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
 function Example() {
   // 声明一个叫 "count" 的 state 变量
@@ -57,7 +57,7 @@ function Example() {
 > 可看做 componentDidMount，componentDidUpdate 和 componentWillUnmount 这三个函数的组合。
 
 ```js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 
 function Example() {
   const [count, setCount] = useState(0);
@@ -79,7 +79,7 @@ effect 在第一次渲染之后和每次更新之后都会执行。
 
 每次我们重新渲染，都会生成新的 effect，替换掉之前的。某种意义上讲，effect 更像是渲染结果的一部分 —— 每个 effect “属于”一次特定的渲染。
 
-> 与 componentDidMount 或 componentDidUpdate 不同，使用 useEffect 调度的 effect 不会阻塞浏览器更新屏幕，这让你的应用看起来响应更快。大多数情况下，effect 不需要同步地执行。在个别情况下（例如测量布局），有单独的 useLayoutEffect Hook 供你使用，其 API 与 useEffect 相同。
+> 与 componentDidMount 或 componentDidUpdate 不同，传给 useEffect 的函数会在浏览器完成布局与绘制之后，在一个延迟事件中被调用。使用 useEffect 调度的 effect 不会阻塞浏览器更新屏幕，这让你的应用看起来响应更快。大多数情况下，effect 不需要同步地执行。在个别情况下（例如测量布局），有单独的 useLayoutEffect Hook 供你使用，其 API 与 useEffect 相同。
 
 ### 需要清除的数据源
 
@@ -88,7 +88,7 @@ effect 在第一次渲染之后和每次更新之后都会执行。
 方法：返回一个方法用于清除数据
 
 ```js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 
 function FriendStatus(props) {
   const [isOnline, setIsOnline] = useState(null);
@@ -106,9 +106,9 @@ function FriendStatus(props) {
   });
 
   if (isOnline === null) {
-    return "Loading...";
+    return 'Loading...';
   }
-  return isOnline ? "Online" : "Offline";
+  return isOnline ? 'Online' : 'Offline';
 }
 ```
 
@@ -171,6 +171,71 @@ useEffect(() => {
 }, [props.friend.id]); // 仅在 props.friend.id 发生变化时，重新订阅
 ```
 
+#### effect 函数内部依赖的变量，最好放在依赖列表里
+
+1. **推荐：把函数放在 effect 内部**
+2. 如果不能：可以
+   - 把函数移到组件外
+   - 纯计算函数：在 effect 之外调用，并让 effect 依赖它的返回值
+   - 把函数加入 effect 的依赖但 把它的定义包裹 进 useCallback Hook
+
+```js
+function ProductPage({ productId }) {
+  // ✅ 用 useCallback 包裹以避免随渲染发生改变
+  const fetchProduct = useCallback(() => {
+    // ... Does something with productId ...
+  }, [productId]); // ✅ useCallback 的所有依赖都被指定了
+
+  return <ProductDetails fetchProduct={fetchProduct} />;
+}
+
+function ProductDetails({ fetchProduct }) {
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]); // ✅ useEffect 的所有依赖都被指定了
+  // ...
+}
+```
+
+### 如果 effect 里有定时器 or 订阅等方法，依赖于某些变量将会导致定时器 or 订阅被不断重置，考虑使用函数式更新 state
+
+```js
+export function IntervalCounter() {
+  const [count, setCount] = useState(0);
+  /**
+   * 定时器会被不断重置
+   */
+  useEffect(() => {
+    console.log('init');
+    const id = setInterval(() => {
+      setCount(count + 1);
+    }, 1000);
+    return () => {
+      console.log('clear');
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [count]);
+  useEffect(() => {
+    console.log('init');
+    const id = setInterval(() => {
+      setCount((c) => c + 1);
+    }, 1000);
+    return () => {
+      console.log('clear');
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <h1>{count}</h1>;
+}
+```
+
+#### 一个 state 依赖另一个 state 的场景
+
+- 尝试用 useReducer 把 state 更新逻辑 移到 effect 之外 [示例链接](https://adamrackis.dev/state-and-use-reducer/)
+- 想要类似 class 中的 this 的功能，你可以 使用一个 ref 来保存一个可变的变量。
+
 ## [useContext](https://zh-hans.reactjs.org/docs/hooks-reference.html#usecontext)
 
 ```javascript
@@ -190,9 +255,9 @@ const initialState = { count: 0 };
 
 function reducer(state, action) {
   switch (action.type) {
-    case "increment":
+    case 'increment':
       return { count: state.count + 1 };
-    case "decrement":
+    case 'decrement':
       return { count: state.count - 1 };
     default:
       throw new Error();
@@ -204,8 +269,8 @@ function Counter() {
   return (
     <>
       Count: {state.count}
-      <button onClick={() => dispatch({ type: "decrement" })}>-</button>
-      <button onClick={() => dispatch({ type: "increment" })}>+</button>
+      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
+      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
     </>
   );
 }
@@ -220,11 +285,11 @@ function init(initialCount) {
 
 function reducer(state, action) {
   switch (action.type) {
-    case "increment":
+    case 'increment':
       return { count: state.count + 1 };
-    case "decrement":
+    case 'decrement':
       return { count: state.count - 1 };
-    case "reset": {
+    case 'reset': {
       return init(action.payload);
     }
     default:
@@ -238,12 +303,12 @@ export function Counter({ initialCount }) {
     <div>
       <p>{state.count}</p>
       <button
-        onClick={() => dispatch({ type: "reset", payload: initialCount })}
+        onClick={() => dispatch({ type: 'reset', payload: initialCount })}
       >
         reset
       </button>
-      <button onClick={() => dispatch({ type: "increment" })}>+</button>
-      <button onClick={() => dispatch({ type: "decrement" })}>-</button>
+      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
+      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
     </div>
   );
 }
@@ -352,7 +417,7 @@ React 依赖 Hook 调用的顺序来判断 state 对应的是哪个 useState
 ```js
 function Example() {
   // 1. Use the name state variable
-  const [name, setName] = useState("Mary");
+  const [name, setName] = useState('Mary');
 
   // 2. Use an effect for persisting the form
   useEffect(function persistForm() {
@@ -360,17 +425,17 @@ function Example() {
   });
 
   // 3. Use the surname state variable
-  const [surname, setSurname] = useState("Poppins");
+  const [surname, setSurname] = useState('Poppins');
 
   // 4. Use an effect for updating the title
   useEffect(function updateTitle() {
-    document.title = name + " " + surname;
+    document.title = name + ' ' + surname;
   });
 
   return (
     <div>
       <p>You clicked {name} times</p>
-      <button onClick={() => setName("aaa")}>Click me</button>
+      <button onClick={() => setName('aaa')}>Click me</button>
     </div>
   );
 }
@@ -405,7 +470,7 @@ class Cat extends React.Component {
     return (
       <img
         src="/cat.jpg"
-        style={{ position: "absolute", left: mouse.x, top: mouse.y }}
+        style={{ position: 'absolute', left: mouse.x, top: mouse.y }}
       />
     );
   }
@@ -427,7 +492,7 @@ class Mouse extends React.Component {
 
   render() {
     return (
-      <div style={{ height: "100%" }} onMouseMove={this.handleMouseMove}>
+      <div style={{ height: '100%' }} onMouseMove={this.handleMouseMove}>
         {/*
           Instead of providing a static representation of what <Mouse> renders,
           use the `render` prop to dynamically determine what to render.
@@ -457,7 +522,7 @@ class MouseTracker extends React.Component {
 #### 自定义 Hook 示例
 
 ```js
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 function useFriendStatus(friendID) {
   const [isOnline, setIsOnline] = useState(null);
@@ -480,15 +545,15 @@ function FriendStatus(props) {
   const isOnline = useFriendStatus(props.friend.id);
 
   if (isOnline === null) {
-    return "Loading...";
+    return 'Loading...';
   }
-  return isOnline ? "Online" : "Offline";
+  return isOnline ? 'Online' : 'Offline';
 }
 function FriendListItem(props) {
   const isOnline = useFriendStatus(props.friend.id);
 
   return (
-    <li style={{ color: isOnline ? "green" : "black" }}>{props.friend.name}</li>
+    <li style={{ color: isOnline ? 'green' : 'black' }}>{props.friend.name}</li>
   );
 }
 ```
@@ -543,7 +608,7 @@ function useState(initialState) {
 function useEffect(callback, dep) {
   let prevDep = memorizedState[cursor];
   let isSame = prevDep && dep ? dep.every((v, i) => v === prevDep[i]) : false;
-  if (!isSame && typeof callback === "function") {
+  if (!isSame && typeof callback === 'function') {
     callback();
     memorizedState[cursor] = dep;
   }
@@ -571,7 +636,7 @@ function App() {
 }
 
 function render() {
-  ReactDOM.render(<App />, document.getElementById("root"));
+  ReactDOM.render(<App />, document.getElementById('root'));
 }
 
 render();

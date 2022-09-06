@@ -106,3 +106,16 @@ funcs.forEach((fn) => {
  * 4. new Proxy()会返回一个新对象，不会污染源原对象
  * 5. Proxy可以监听数组，不用单独处理数组
  */
+
+vue.prototype.observer = function (obj) {
+  let self = this;
+  this.$data = new Proxy(this.$data, {
+    get: function (target, key) {
+      return target[key];
+    },
+    set: function (target, key, value) {
+      target[key] = value;
+      self.render();
+    },
+  });
+};

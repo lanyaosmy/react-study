@@ -1,3 +1,4 @@
+/* eslint-disable no-extend-native */
 const { set } = require('date-fns');
 const {
   default: areIntervalsOverlapping,
@@ -313,3 +314,261 @@ let union = new Set([...a, ...b]);
 let intersect = new Set([...a].filter((v) => b.has(v)));
 // a 相对于 b的差集
 let difference = new Set([...a].filter((v) => !b.has(v)));
+
+function Puppy(age) {
+  this.puppyAge = age;
+}
+
+Puppy.prototype.constructor = function myConstructor(age) {
+  this.puppyAge = age + 1;
+};
+
+const myPuppy2 = new Puppy(2);
+// console.log(myPuppy2.puppyAge); // 输出是2
+
+function Child() {
+  console.log('child');
+  this.a = 1;
+}
+Child.prototype = new Puppy(1);
+
+const child = new Child();
+
+/**
+ * this
+ */
+
+Function.prototype._call = function (...args) {
+  if (typeof this !== 'function') {
+    throw Error('not function');
+  }
+  const newThis = args[0] || window;
+  const newArgs = args.slice(1);
+  const fnSym = Symbol('fn');
+  newThis[fnSym] = this;
+  const result = newThis[fnSym](...newArgs);
+  delete newThis[fnSym];
+  return result;
+};
+
+Function.prototype._apply = function (...args) {
+  if (typeof this !== 'function') {
+    throw Error('not function');
+  }
+  const newThis = args[0] || window;
+  const newArgs = args[1];
+  const fnSym = Symbol('fn');
+  newThis[fnSym] = this;
+  const result = newThis[fnSym](...newArgs);
+  delete newThis[fnSym];
+  return result;
+};
+
+Function.prototype._bind = function (...args) {
+  if (typeof this !== 'function') {
+    throw Error('not function');
+  }
+  const _this = this;
+  const newThis = args[0] || window;
+  const newArgs = args.slice(1);
+  return function (...args1) {
+    return _this.apply(
+      this instanceof _this ? this : newThis, // 作为构造函数new时，指向实例对象
+      newArgs.concat(args1),
+    );
+  };
+};
+
+function promiseTest(time) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(1);
+    }, time * 1000);
+  });
+}
+new Promise((resolve, reject) => {
+  resolve(1);
+})
+  .then(1)
+  .then(console.log);
+Promise._all = function (arg) {
+  let arrs = arg.map((v) => {
+    if (!(v instanceof Promise)) {
+      return Promise.resolve(v);
+    }
+    return v;
+  });
+  return new Promise((resolve, reject) => {
+    let result = [],
+      i = 0,
+      len = arrs.length;
+    if (len === 0) {
+      resolve(result);
+    }
+    for (; i < len; i++) {
+      arrs[i]
+        .then((res) => {
+          result.push(res);
+          if (result.length === len) {
+            resolve(result);
+          }
+        })
+        .catch((err) => reject(err));
+    }
+  });
+};
+
+const start = Date.now();
+Promise._all([promiseTest(1), promiseTest(2)]).then((res) => {
+  console.log(Date.now() - start, res);
+});
+// function MyPromise(resolve = Promise.resolve(), reject = Promise.reject()) {
+//   Promise.call(this, resolve, reject);
+// }
+// MyPromise.prototype = new Promise((resolve) => resolve);
+// MyPromise.prototype.constructor = MyPromise;
+// new MyPromise((resolve) => resolve(1)).then((res) => {
+//   console.log(res);
+// });
+const PENDING = 'PENDING';
+const FULFILLED = 'FULFILLED';
+const REJECTED = 'REJECTED';
+
+function MyPromise(fn) {
+  if (typeof fn !== 'function') {
+    throw Error('must be function');
+  }
+  this.status = PENDING;
+  this.value = null;
+  this.reason = null;
+  this.fulfilledCallbacks = [];
+  this.rejectedCallbacks = [];
+  let that = this;
+  function resolve(val) {
+    if (this.status === PENDING) {
+      that.status = FULFILLED;
+      that.value = val;
+      this.fulfilledCallbacks.forEach((cb) => cb(val));
+    }
+  }
+  function reject(reason) {
+    if (this.status === PENDING) {
+      that.status = REJECTED;
+      that.reason = reason;
+      this.rejectedCallbacks.forEach((cb) => cb(reason));
+    }
+  }
+  try {
+    fn.call(this, resolve, reject);
+  } catch (error) {
+    reject(error);
+  }
+}
+
+MyPromise.prototype.then = function (onFulFilled, onRejected) {
+  const that = this;
+  let realFulFilled = onFulFilled;
+  if (typeof onFulFilled !== 'function') {
+    realFulFilled = () => onFulFilled;
+  }
+  let realRejected = onRejected;
+  if (typeof onRejected !== 'function') {
+    realRejected = () => onRejected;
+  }
+  if (this.status === FULFILLED) {
+    return new MyPromise(function (resolve, reject) {
+      if (typeof onFulFilled !== 'function') {
+        resolve(onFulFilled);
+      } else {
+        try {
+          realFulFilled(that.value);
+        } catch (error) {
+          reject(error);
+        }
+      }
+    });
+  }
+  if (this.status === REJECTED) {
+    return new MyPromise(function (resolve, reject) {
+      try {
+        realRejected(that.value);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+  if (this.status === PENDING) {
+    return new MyPromise(function (resolve, reject) {
+      that.fulfilledCallbacks.push(() => {
+        try {
+          realFulFilled(that.value);
+        } catch (error) {
+          reject(error);
+        }
+      });
+      that.rejectedCallbacks.push(() => {
+        try {
+          realRejected(that.reason);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  }
+};
+
+function combineReducers(reducers) {
+  const stateKeys = Object.keys(reducers);
+
+  return function combine(state, action) {
+    const finalState = {};
+    for (let i = 0; i < stateKeys.length; i++) {
+      const newKey = stateKeys[i];
+      const newReducer = reducers[newKey];
+      // 从root state中取出指定key的值作为reducer的state
+      const prevState = state[newKey];
+      finalState[newKey] = newReducer(prevState, action);
+    }
+    return finalState;
+  };
+}
+
+/**
+ * dispatch
+ * subscribe
+ * getState
+ * @param {*} reducer
+ */
+function createStore(reducer, enhancer) {
+  if (enhancer && typeof enhancer === 'function') {
+    return enhancer(createStore)(reducer);
+  }
+  let state = {};
+  const listeners = [];
+
+  function subscribe(fn) {
+    if (typeof fn !== 'function') {
+      throw Error('not a function!');
+    }
+    listeners.push(fn);
+    return function unsubscribe() {
+      const index = listeners.indexOf(fn);
+      listeners.splice(index, 1);
+    };
+  }
+  function getState() {
+    return state;
+  }
+  function dispatch(action) {
+    state = reducer(state, action);
+    listeners.forEach((v) => {
+      v(state);
+    });
+  }
+
+  return {
+    subscribe,
+    getState,
+    dispatch,
+  };
+}

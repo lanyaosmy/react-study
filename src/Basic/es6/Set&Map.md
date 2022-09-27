@@ -31,6 +31,12 @@ let intersect = new Set([...a].filter((v) => b.has(v)));
 let difference = new Set([...a].filter((v) => !b.has(v)));
 ```
 
+## WeakSet
+
+- WeakSet 的成员只能是对象，而不能是其他类型的值。
+
+- WeakSet 中的对象都是弱引用，即垃圾回收机制不考虑 WeakSet 对该对象的引用
+
 ## Map
 
 传统对象只能用字符串当键

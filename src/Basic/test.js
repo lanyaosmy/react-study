@@ -572,3 +572,26 @@ function createStore(reducer, enhancer) {
     dispatch,
   };
 }
+
+function logger(store) {
+  const { getState } = store;
+  return (next) => (action) => {
+    const returnValue = next(action);
+    console.log('state after dispatch', getState());
+    return returnValue;
+  };
+}
+
+function applyMiddleware(...middlewares) {
+  return (createStore) => (reducer) => {
+    const store = createStore(reducer);
+    // const { dispatch } = store;
+
+    const nextDispatch = middlewares.reduceRight((pre, middleware) => {
+      const func = middleware(store);
+      const nextDispatch = func(pre);
+      return { ...store, dispatch: nextDispatch };
+    }, store.dispatch);
+    return { ...store, dispatch: nextDispatch };
+  };
+}

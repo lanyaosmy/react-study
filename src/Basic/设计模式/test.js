@@ -1,17 +1,4 @@
-
-- [框架源码中用来提高扩展性的设计模式](https://juejin.cn/post/6844904174451179528)
-
-### 职责链模式
-
-```js
-// 添加请求拦截器
-axios.interceptors.request.use(function (config) {
-    // 在发送请求之前做些什么
-    return config;
-  }, function (error) {
-    // 对请求错误做些什么
-    return Promise.reject(error);
-  });
+// 职责链
 
 function Axios() {
   this.interceptors = {
@@ -46,13 +33,3 @@ Axios.prototype.request = function (config) {
   }
   return promise;
 };
-
-```
-
-### 观察者模式
-
-node的EventEmitter
-
-### 装饰器模式
-
-先调用一下原来的方法，然后加上更多的操作

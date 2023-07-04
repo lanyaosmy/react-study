@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navbar } from './components/NavBar';
 import {
   Counter,
@@ -46,6 +46,7 @@ class App extends React.Component {
             <Route exact path="/editPost/:postId" component={EditPostForm} />
             <Route exact path="/users" component={UsersList} />
             <Route exact path="/users/:userId" component={UserPage} />
+            {/* <Route exact path="/live" component={HttpFlv} /> */}
             {/* <Route exact path="/notifications" component={NotificationsList} /> */}
             <Redirect to="/" />
           </Switch>

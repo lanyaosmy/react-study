@@ -1,3 +1,5 @@
+[toc]
+
 ## Set
 
 类似于数组，但是成员的值都是唯一的，没有重复的值。
@@ -31,7 +33,7 @@ let intersect = new Set([...a].filter((v) => b.has(v)));
 let difference = new Set([...a].filter((v) => !b.has(v)));
 ```
 
-## WeakSet
+### WeakSet
 
 - WeakSet 的成员只能是对象，而不能是其他类型的值。
 
@@ -43,7 +45,7 @@ let difference = new Set([...a].filter((v) => !b.has(v)));
 
 Map各种类型的值（包括对象）都可以当作键
 
-## WeakMap
+### WeakMap
 
 - WeakMap只接受对象作为键名（null除外），不接受其他类型的值作为键名。
 - WeakMap的键名所指向的对象，不计入垃圾回收机制。一旦不再需要，WeakMap 里面的键名对象和所对应的键值对会自动消失，不用手动删除引用

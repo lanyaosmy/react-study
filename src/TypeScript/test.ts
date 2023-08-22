@@ -60,12 +60,88 @@ type Num = GetReturnType<() => number>;
 
 type Num1 = ReturnType<() => number>;
 
+type ToArray<Type> = Type extends any ? Type[] : never;
+
+type StrArrOrNumArr = ToArray<string | number>;
+
+type ToArrayNonDist<Type> = [Type] extends [any] ? Type[] : never;
+
+// 'StrArrOrNumArr' is no longer a union.
+type StrArrOrNumArr2 = ToArrayNonDist<string | number>;
+
+//
+
 function identity<Type>(arg: Type): Type {
   return arg;
 }
 
 let myIdentity: <Type>(arg: Type) => Type = identity;
 
+// 取Type中的属性，并把值都变成boolean
 type OptionsFlags<Type> = {
   [Property in keyof Type]: boolean;
 };
+
+type Features = {
+  darkMode: () => void;
+  newUserProfile: () => void;
+};
+
+type FeatureOptions = OptionsFlags<Features>;
+
+type AllLocaleIDs = '1' | '2' | '3';
+type Lang = 'en' | 'ja' | 'pt';
+
+type LocaleMessageIDs = `${Lang}_${AllLocaleIDs}`;
+
+type PropEventSource<Type> = {
+  on(
+    eventName: `${string & keyof Type}Changed`,
+    callback: (newValue: any) => void,
+  ): void;
+};
+
+/// Create a "watched object" with an `on` method
+/// so that you can watch for changes to properties.
+declare function makeWatchedObject<Type>(
+  obj: Type,
+): Type & PropEventSource<Type>;
+
+type a = IdLabel & NameLabel;
+
+interface Checkable {
+  check(name: string): boolean;
+}
+
+class NameChecker implements Checkable {
+  check(s) {
+    // Notice no error here
+    return s.toLowerCase();
+  }
+}
+
+class Base {
+  name = 'base';
+  greet() {
+    console.log('Hello, world!');
+  }
+}
+
+class Derived extends Base {
+  name = 'derived';
+  greet(name?: string) {
+    if (name === undefined) {
+      super.greet();
+    } else {
+      console.log(`Hello, ${name.toUpperCase()}`);
+    }
+  }
+}
+
+const d = new Derived();
+d.greet();
+d.greet('reader');
+
+const b: Base = d;
+// No problem
+b.greet();

@@ -1,8 +1,4 @@
 /* eslint-disable no-extend-native */
-const { set } = require('date-fns');
-const {
-  default: areIntervalsOverlapping,
-} = require('date-fns/areIntervalsOverlapping');
 
 function fn1() {
   return new Promise((resolve, reject) => {
@@ -185,6 +181,30 @@ const cachedfFibonacci = memo(fibonacci);
 
 // console.log(needTime); // 时间直接变为0了，直接取缓存，快到1毫秒都不要
 
+// lodash memoize
+function memoize(fn, resolver) {
+  if (
+    typeof fn !== 'function' ||
+    (resolver != null && typeof resolver !== 'function')
+  ) {
+    throw new TypeError('Expected a function');
+  }
+  const memoized = function (...args) {
+    const key = resolver ? resolver.apply(this, args) : args[0];
+    const cache = memoized.cache;
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    const result = fn.apply(this, args);
+    memoized.cache = cache.set(key, result) || cache;
+    return result;
+  };
+  memoized.cache = new (memoize.Cache || Map)();
+  return memoized;
+}
+memoize.Cache = Map;
+
+export default memoize;
 /**
  * curry函数
  */

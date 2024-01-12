@@ -66,3 +66,17 @@ import(/* webpackIgnore: true */ 'ignored-module.js');
 - 预加载 chunk 会在父 chunk 加载时，以并行方式开始加载。prefetch chunk 会在父 chunk 加载结束后开始加载。
 - 预加载 chunk 具有中等优先级，并立即下载。prefetch chunk 在浏览器闲置时下载。
 - 预加载 chunk 会在父 chunk 中立即请求，用于当下时刻。prefetch chunk 会用于未来的某个时刻。
+
+#### 懒加载
+
+```javascript
+   button.onclick = e => import(/* webpackChunkName: "print" */ './print').then(module => {
+     const print = module.default;
+     print();
+   });
+```
+
+在点击按钮之后才加载print
+
+- react懒加载
+  - ```lazy```：第一次渲染时才加载组件代码

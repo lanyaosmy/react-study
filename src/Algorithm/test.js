@@ -110,3 +110,133 @@ var spiralOrder = function (matrix) {
   return result
 };
 spiralOrder([[2, 5], [8, 4], [0, -1]])
+
+
+// 62. 不同路径
+/**
+ * @param {number} m
+ * @param {number} n
+ * @return {number}
+ */
+var uniquePaths = function (m, n) {
+  // let path = new Array(m).fill(new Array(n).fill(0))
+  // path[0][0] = 1
+  // for (let i = 0; i < m; i++) {
+  //   for (let j = (i===0?1:0); j < n; j++) {
+  //     let top = i > 0 ? path[i - 1][j] : 0
+  //     let left = j > 0 ? path[i][j - 1] : 0
+  //     path[i][j] = top + left
+  //   }
+  // }
+  // return path[m - 1][n - 1]
+
+  // 优化空间O(n)
+  let path = new Array(n).fill(1)
+  for (let i = 1; i < m; i++) {
+    for (let j = 1; j < n; j++) {
+      path[j] += path[j - 1]
+    }
+  }
+  return path[n - 1]
+};
+
+// 63.不同路径2
+/**
+ * @param {number[][]} obstacleGrid
+ * @return {number}
+ */
+var uniquePathsWithObstacles = function (obstacleGrid) {
+  let m = obstacleGrid.length, n = obstacleGrid[0].length
+  let path = new Array(m).fill(new Array(n).fill(0))
+  path[0][0] = 1
+  for (let i = 0; i < m; i++) {
+    for (let j = (i === 0 ? 1 : 0); j < n; j++) {
+      let top = i > 0 && !obstacleGrid[i - 1][j] ? path[i - 1][j] : 0
+      let left = j > 0 && !obstacleGrid[i][j - 1] ? path[i][j - 1] : 0
+      path[i][j] = top + left
+    }
+  }
+  return path[m - 1][n - 1]
+};
+
+// 64.最小路径和
+/**
+ * @param {number[][]} grid
+ * @return {number}
+ */
+var minPathSum = function (grid) {
+  let m = grid.length, n = grid[0].length
+  let path = new Array(m).fill([])
+  path[0][0] = grid[0][0]
+  for (let i = 0; i < m; i++) {
+    for (let j = (i === 0 ? 1 : 0); j < n; j++) {
+      let top = i > 0 ? path[i - 1][j] : 1000
+      let left = j > 0 ? path[i][j - 1] : 1000
+      path[i][j] = Math.min(top, left) + grid[i][j]
+    }
+    // console.log(path[i]);
+  }
+  // console.log(path[0]);
+  return path[m - 1][n - 1]
+};
+minPathSum([[1, 3, 1], [1, 5, 1], [4, 2, 1]])
+
+
+// 66
+/**
+ * @param {number[]} digits
+ * @return {number[]}
+ */
+var plusOne = function (digits) {
+  let i = digits.length - 1
+  let plus = 1
+  while (plus > 0 && i >= 0) {
+    let num = digits[i] + plus
+    plus = num > 9 ? 1 : 0
+    digits[i] = num % 10
+  }
+  if (plus) {
+    digits.unshift(1)
+  }
+  return digits
+};
+
+// 67
+
+/**
+ * @param {string} a
+ * @param {string} b
+ * @return {string}
+ */
+var addBinary = function (a, b) {
+  let p1 = a.length - 1, p2 = b.length - 1
+  let plus = 0
+  let result = ''
+  while (p1 >= 0 || p2 >= 0) {
+    let aNum = p1 >= 0 ? a.charAt(p1) : 0
+    let bNum = p2 >= 0 ? b.charAt(p2) : 0
+    let sum = Number(aNum) + Number(bNum) + plus
+    if (sum > 1) {
+      plus = 1
+    }
+    console.log(sum, plus)
+    result = `${result}${sum % 2}`
+    p1--
+    p2--
+  }
+  if (plus) {
+    result = `1${result}`
+  }
+
+  return result
+};
+
+// 72. 编辑距离
+/**
+ * @param {string} word1
+ * @param {string} word2
+ * @return {number}
+ */
+var minDistance = function (word1, word2) {
+  
+};

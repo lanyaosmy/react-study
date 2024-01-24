@@ -59,3 +59,5 @@ class App extends React.Component {
 }
 
 export default App;
+// export http_proxy = http://proxy.zhenguanyu.com:8118
+// export https_proxy = http://proxy.zhenguanyu.com:8118

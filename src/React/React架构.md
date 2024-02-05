@@ -2,11 +2,27 @@
 
 ### [React 组件，元素和实例](https://zh-hans.reactjs.org/blog/2015/12/18/react-components-elements-and-instances.html)
 
-- **元素** - 一个*元素*是一个普通的对象。它被用来描述什么需要在屏幕上显示，根据 DOM 节点还是其他组件。
+- **元素** - 一个*元素*一个用来描述组件实例或 DOM 节点及其需要属性的普通对象，它只是一个携有 type: (string | ReactClass) 和 props: Object1 字段的不可变描述对象。
+```js
+{
+  type: 'button',
+  props: {
+    className: 'button button-blue',
+    children: {
+      type: 'b',
+      props: {
+        children: 'OK!'
+      }
+    }
+  }
+}
+```
+
 - **组件** - 一个*组件*可以通过多种不同的方式声明。它可以是一个带有 `render()` 方法的类。或者，更简单些，它可以被定义成一个函数。不论何种方式，它都需要 props 作为输入，返回一个 element tree 作为输出。
 - **实例** - this，[保存本地状态和响应生命周期事件](https://zh-hans.reactjs.org/docs/component-api.html) 函数组件根本没有实例
 
-### [stack reconciler](https://zh-hans.reactjs.org/docs/codebase-overview.html#stack-reconciler) [React实现说明](https://zh-hans.reactjs.org/docs/implementation-notes.html)
+### [stack reconciler](https://zh-hans.reactjs.org/docs/codebase-overview.html#stack-reconciler) 
+[React实现说明](https://zh-hans.reactjs.org/docs/implementation-notes.html)
 
 ### React15架构
 

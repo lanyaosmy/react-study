@@ -55,8 +55,7 @@ type StoreEnhancer = (next: StoreCreator) => StoreCreator
 function applyMiddleware(middleware) {
   return (createStore) => (reducer) => {
     const store = createStore(reducer);
-    const { dispatch } = store;
-    const nextDispatch = middleware(store)(dispatch);
+    const nextDispatch = middleware(store)(store.dispatch);
     return { ...store, dispatch: nextDispatch };
   };
 }

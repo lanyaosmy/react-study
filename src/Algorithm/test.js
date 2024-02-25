@@ -238,5 +238,57 @@ var addBinary = function (a, b) {
  * @return {number}
  */
 var minDistance = function (word1, word2) {
-  
+
 };
+
+
+// 79. 单词搜索
+/**
+ * @param {character[][]} board
+ * @param {string} word
+ * @return {boolean}
+ */
+var exist = function (board, word) {
+  let m = board.length
+  let n = board[0].length
+  var dfs = (ind, i, j) => {
+    if (i < 0 || j < 0 || i >= m || j >= n || board[i][j] !== word.charAt(ind)) return false
+    if (ind === word.length - 1) {
+      return true
+    }
+    board[i][j] = ''
+    let next = dfs(ind + 1, i - 1, j) || dfs(ind + 1, i + 1, j) || dfs(ind + 1, i, j - 1) || dfs(ind + 1, i, j + 1)
+    board[i][j] = word.charAt(ind)
+    return next
+  }
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      if (dfs(0, i, j)) return true
+    }
+  }
+  return false
+};
+
+/**
+ * @param {number[]} nums
+ * @return {number}
+ */
+var removeDuplicates = function (nums) {
+  let i = 1
+  let count = 1
+  while (i < nums.length) {
+    if (nums[i] === nums[i - 1]) {
+      if (count === 2) {
+        nums.splice(i, 1)
+      } else {
+        count += 1;
+        i++
+      }
+    } else {
+      count = 1
+      i++
+    }
+  }
+  return i
+};
+console.log();

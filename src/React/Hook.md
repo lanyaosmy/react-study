@@ -204,17 +204,15 @@ function TabContainer() {
 
 通过转换状态，在重新渲染过程中你的用户界面保持响应。例如，如果用户单击一个选项卡，但改变了主意并单击另一个选项卡，他们可以在不等待第一个重新渲染完成的情况下完成操作。
 
-
 ## useRef
 
-ref 和 state 的不同之处 
+ref 和 state 的不同之处
 | ref                                                   | state                                                                                    |
 | ----------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | useRef(initialValue)返回 { current: initialValue }    | useState(initialValue) 返回 state 变量的当前值和一个 state 设置函数 ( [value, setValue]) |
 | 更改时不会触发重新渲染                                | 更改时触发重新渲染。                                                                     |
 | 可变 —— 你可以在渲染过程之外修改和更新 current 的值。 | “不可变” —— 你必须使用 state 设置函数来修改 state 变量，从而排队重新渲染。               |
 | 你不应在渲染期间读取（或写入） current 值。           | 你可以随时读取 state。但是，每次渲染都有自己不变的 state 快照。                          |
-
 
 原则上 useRef 可以在 useState 的基础上 实现。 你可以想象在 React 内部，useRef 是这样实现的：
 
@@ -227,19 +225,23 @@ function useRef(initialValue) {
 ```
 
 ### 何时使用 ref
+
 - 存储 timeout ID
 - 存储和操作 DOM 元素
 - 存储不需要被用来计算 JSX 的其他对象。
 如果你的组件需要存储一些值，但不影响渲染逻辑，请选择 ref。
 
 ### 使用flushSync立即同步更新DOM
+
 ```js
 setTodos([ ...todos, newTodo]);
 listRef.current.lastChild.scrollIntoView();
 ```
+
 在setState后立即操作DOM
 
 从 react-dom 导入 flushSync 并将 state 更新包裹 到 flushSync 调用中
+
 ```js
 flushSync(() => {
   setTodos([ ...todos, newTodo]);
@@ -247,10 +249,11 @@ flushSync(() => {
 listRef.current.lastChild.scrollIntoView();
 ```
 
-
 ## useState
-渲染会及时生成一张快照 
+
+渲染会及时生成一张快照
 当 React 重新渲染一个组件时：
+
 - React 会再次调用你的函数
 - 函数会返回新的 JSX 快照
 - React 会更新界面以匹配返回的快照
@@ -276,8 +279,8 @@ export default function Counter() {
 一个 state 变量的值永远不会在一次渲染的内部发生变化
 React 会使 state 的值始终”固定“在一次渲染的各个事件处理函数内部
 
+### React 会对 state 更新进行批处理
 
-### React 会对 state 更新进行批处理 
 React 会等到事件处理函数中的 所有 代码都运行完毕再处理你的 state 更新
 
 #### 多次更新同一个State
@@ -311,6 +314,7 @@ react将```n => n + 1```三次加入更新队列
   // 6
 }}>+</button>
 ```
+
 1. setNumber(number + 5)：number 为 0，所以 setNumber(0 + 5)。React 将 “替换为 5” 添加到其队列中。
 2. setNumber(n => n + 1)：n => n + 1 是一个更新函数。 React 将 该函数 添加到其队列中。
 
@@ -320,27 +324,26 @@ react将```n => n + 1```三次加入更新队列
 - 任何其他的值（例如：数字 5）会导致“替换为 5”被添加到队列中，已经在队列中的内容会被忽略。
 
 ## useEffect
+
 useEffect 会在屏幕更新渲染之后执行
 React 总是在执行下一轮渲染的 Effect 之前清理上一轮渲染的 Effect
 如果 React 的所有依赖项都与上次渲染时的值相同，则将跳过本次 Effect。使用`Object.is()`判断
-每一轮渲染都有自己的 Effect 
+每一轮渲染都有自己的 Effect
 React 将在下次 Effect 运行之前以及卸载期间这两个时候调用清理函数。
-
-
 
 ### Effect中请求数据
 
 缺点：
+
 - Effect 不能在服务端执行
 - 直接在 Effect 中获取数据容易产生网络瀑布（network waterfall）
 - 直接在 Effect 中获取数据通常意味着无法预加载或缓存数据
 - [人机竞争](https://maxrozen.com/race-conditions-fetching-data-react-with-useeffect)
 
 请考虑使用或构建客户端缓存。
-目前受欢迎的开源解决方案是 React Query(https://tanstack.com/query/latest/docs/framework/react/overview)、useSWR(https://zhuanlan.zhihu.com/p/93824106?utm_id=0) 和 React Router v6.4+。你也可以构建自己的解决方案，在这种情况下，你可以在幕后使用 Effect，但是请注意添加用于删除重复请求、缓存响应和避免网络瀑布（通过预加载数据或将数据需求提升到路由）的逻辑。
+目前受欢迎的开源解决方案是 React Query(<https://tanstack.com/query/latest/docs/framework/react/overview)、useSWR(https://zhuanlan.zhihu.com/p/93824106?utm_id=0>) 和 React Router v6.4+。你也可以构建自己的解决方案，在这种情况下，你可以在幕后使用 Effect，但是请注意添加用于删除重复请求、缓存响应和避免网络瀑布（通过预加载数据或将数据需求提升到路由）的逻辑。
 
-
-### 如何移除不必要的 Effect 
+### 如何移除不必要的 Effect
 
 - 不必使用 Effect 来转换渲染所需的数据 ==> 直接计算
 
@@ -394,7 +397,8 @@ function List({ items }) {
 }
 ```
 
-- 在事件处理函数中共享逻辑 
+- 在事件处理函数中共享逻辑
+
 ```js
 function ProductPage({ product, addToCart }) {
   // 🔴 避免：在 Effect 中处理属于事件特定的逻辑
@@ -428,4 +432,3 @@ function ProductPage({ product, addToCart }) {
 - 通知父组件有关 state 变化的信息 ==> 状态提升
 - 将数据传递给父组件 ==> 向子组件传递数据
 - 订阅外部 store ==> useSyncExternalStore
-- 

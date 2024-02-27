@@ -18,17 +18,18 @@
     //     ? acc.concat(flat(val, depth - 1))
     //     : acc.concat(val);
     // }, []);
-    let stack = [...arr];
-    let result = [];
+    let stack = arr.map(v => ({ value: v, dep: 0 }))
+    let result = []
     while (stack.length) {
-      let v = stack.pop();
-      if (Array.isArray(v)) {
-        stack.push(...v);
+      let { value, dep } = stack.pop()
+      if (Array.isArray(value) && dep < depth) {
+        stack.push(...value.map(v => ({ value: v, dep: dep + 1 })))
       } else {
-        result.push(v);
+        result.push(value)
       }
     }
-    return result.reverse();
+    result.reverse()
+    return result
   }
   console.log('FLAT:', flat(arr, Infinity));
 })(false);

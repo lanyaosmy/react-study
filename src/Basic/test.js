@@ -100,8 +100,8 @@ function compose(...arrs) {
 
 const compose2 =
   (...args) =>
-  (x) =>
-    args.reduceRight((pre, curr) => curr(pre), x);
+    (x) =>
+      args.reduceRight((pre, curr) => curr(pre), x);
 const add = (x) => x + 10;
 const multiply = (x) => x * 10;
 // let res = compose2(multiply, add)(10);
@@ -224,7 +224,7 @@ const fun = (a, b, c) => {
 };
 const curriedFun = curry(fun);
 
-// console.log(curriedFun(1, 2, 3));
+console.log(curriedFun(1, 2, 3));
 
 /**
  * 浅拷贝
@@ -261,7 +261,7 @@ function deepCopy(obj) {
 let target2 = {
   name: 'John',
   age: 20,
-  drive: () => {},
+  drive: () => { },
   girlFriend: undefined,
 };
 // console.log(deepCopy(target2));
@@ -286,7 +286,7 @@ function symbolCopy(obj) {
 let target3 = {
   [Symbol('name')]: 'John',
   age: 20,
-  drive: () => {},
+  drive: () => { },
   girlFriend: undefined,
 };
 // console.log(symbolCopy(target3));
@@ -318,7 +318,7 @@ function deepCopy2(targetObj) {
 let target4 = {
   [Symbol('name')]: 'John',
   age: 20,
-  drive: () => {},
+  drive: () => { },
   girlFriend: undefined,
 };
 
@@ -450,92 +450,136 @@ Promise._all([promiseTest(1), promiseTest(2)]).then((res) => {
 // new MyPromise((resolve) => resolve(1)).then((res) => {
 //   console.log(res);
 // });
-const PENDING = 'PENDING';
-const FULFILLED = 'FULFILLED';
-const REJECTED = 'REJECTED';
 
-function MyPromise(fn) {
-  if (typeof fn !== 'function') {
-    throw Error('must be function');
-  }
-  this.status = PENDING;
-  this.value = null;
-  this.reason = null;
-  this.fulfilledCallbacks = [];
-  this.rejectedCallbacks = [];
-  let that = this;
-  function resolve(val) {
-    if (this.status === PENDING) {
-      that.status = FULFILLED;
-      that.value = val;
-      this.fulfilledCallbacks.forEach((cb) => cb(val));
+
+class MyPromise {
+  constructor(callback) {
+    this.status = "pending";
+    this.value = "";
+    this.reason = "";
+    // 存储成功状态的回调函数
+    this.onResolvedCallbacks = [];
+    // 存储失败状态的回调函数
+    this.onRejectedCallbacks = [];
+    const resolve = (value) => {
+      if (this.status == "pending") {
+        this.status = "resolved"
+        this.value = value;
+        this.onResolvedCallbacks.forEach((fn) => fn());
+      }
     }
-  }
-  function reject(reason) {
-    if (this.status === PENDING) {
-      that.status = REJECTED;
-      that.reason = reason;
-      this.rejectedCallbacks.forEach((cb) => cb(reason));
+    const reject = (reason) => {
+      if (this.status == "pending") {
+        this.status = "rejected"
+        this.reason = reason;
+        this.onRejectedCallbacks.forEach((fn) => fn());
+      }
     }
+    try {
+      callback(resolve, reject);
+    } catch (error) {
+      reject(error);
+    }
+
   }
-  try {
-    fn.call(this, resolve, reject);
-  } catch (error) {
-    reject(error);
+
+  then(onResolved, onRejected) {
+    onResolved = typeof onResolved === "function" ? onResolved : (value) => value;
+    onRejected = typeof onRejected === "function" ? onRejected : (reason) => { throw reason };
+    const promise2 = new MyPromise((resolve, reject) => {
+      if (this.status == "resolved") {
+        console.log('1111111111')
+        try {
+          const x = onResolved(this.value)
+          resolve(x)
+        } catch (error) {
+          reject(error)
+        }
+      }
+      if (this.status == "rejected") {
+        console.log('2222222')
+        try {
+          const x = onRejected(this.reason)
+          resolve(x)
+        } catch (error) {
+          reject(error)
+        }
+      }
+      if (this.status == "pending") {
+        console.log('333333333333')
+        this.onResolvedCallbacks.push(() => {
+          if (this.status == "resolved") {
+            try {
+              const x = onResolved(this.value)
+              resolve(x)
+            } catch (error) {
+              reject(error)
+            }
+          }
+        })
+        this.onRejectedCallbacks.push(() => {
+          if (this.status == "rejected") {
+            try {
+              const x = onRejected(this.reason)
+              resolve(x)
+            } catch (error) {
+              reject(error)
+            }
+          }
+        })
+      } else {
+        // 执行完所有回调函数之后，清空回调数组
+        this.onResolvedCallbacks = [];
+        this.onRejectedCallbacks = [];
+      }
+    })
+    return promise2
+  }
+  catch(onRejected) {
+    return this.then(null, onRejected)
+  }
+
+  static resolve(value) {
+    if (value instanceof MyPromise) {
+      return value;
+    }
+    return new MyPromise(resolve => resolve(value));
+  }
+
+  static reject(reason) {
+    return new MyPromise((_, reject) => reject(reason));
   }
 }
 
-MyPromise.prototype.then = function (onFulFilled, onRejected) {
-  const that = this;
-  let realFulFilled = onFulFilled;
-  if (typeof onFulFilled !== 'function') {
-    realFulFilled = () => onFulFilled;
-  }
-  let realRejected = onRejected;
-  if (typeof onRejected !== 'function') {
-    realRejected = () => onRejected;
-  }
-  if (this.status === FULFILLED) {
-    return new MyPromise(function (resolve, reject) {
-      if (typeof onFulFilled !== 'function') {
-        resolve(onFulFilled);
-      } else {
-        try {
-          realFulFilled(that.value);
-        } catch (error) {
-          reject(error);
-        }
-      }
+const promise = new MyPromise((resolve, reject) => {
+  // setTimeout(() => {
+  // 	console.log('1')
+  resolve('成功')
+  // }, 1000)
+})
+promise.then(1).
+  then(value => {
+    // console.log('2')
+    // return "第一次"
+    // setTimeout(() => {
+    console.log('1')
+    // return "第一次"
+    // },1000)
+  }).then(value => {
+    console.log('3')
+    return new MyPromise((resolve, reject) => {
+      setTimeout(() => {
+        resolve('第二次处理结果');
+      }, 1000);
     });
-  }
-  if (this.status === REJECTED) {
-    return new MyPromise(function (resolve, reject) {
-      try {
-        realRejected(that.value);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-  if (this.status === PENDING) {
-    return new MyPromise(function (resolve, reject) {
-      that.fulfilledCallbacks.push(() => {
-        try {
-          realFulFilled(that.value);
-        } catch (error) {
-          reject(error);
-        }
-      });
-      that.rejectedCallbacks.push(() => {
-        try {
-          realRejected(that.reason);
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-  }
-};
+  }).then(value => {
+    console.log(value);
+    throw new Error('抛出异常');
+  }).catch(error => {
+    console.log(error);
+  });
+
+
 
 function combineReducers(reducers) {
   const stateKeys = Object.keys(reducers);

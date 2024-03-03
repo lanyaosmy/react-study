@@ -80,3 +80,32 @@ import(/* webpackIgnore: true */ 'ignored-module.js');
 
 - react懒加载
   - ```lazy```：第一次渲染时才加载组件代码
+
+
+### loader和plugin
+原文链接：https://blog.csdn.net/leelxp/article/details/108099138
+
+#### loader
+loader是文件加载器，能够加载资源文件，并对这些文件进行统一处理，诸如编译、压缩等，最终一起打包到指定的文件中。处理一个文件可以使用多个loader，loader的执行顺序和配置中的顺序正好相反，也就是说最后一个loader最先执行，第一个loader最后执行。第一个执行的loader的返回值接收源文件内容作为参数，其他loader接收前一个执行的loader的返回值作为参数，最后执行的loader会返回此模块的JavaScript的源码。
+
+#### plugin
+plugin的功能更加强大，loader不能做的，plugin都能做。plugin的功能要更加丰富，从打包 优化和压缩，到从新定义环境变量。功能强大到可以用来处理各种各样的任务。
+
+常用的plugin有哪些？
+ignore-plugin:忽略文件
+
+uglifyjs-webpack-plugin:不支持es6压缩
+
+terser-webpack-plugin:支持es6压缩
+
+webpack-parallel-uglify-plugin:多进程执行代码压缩，提升构建速度
+
+serviceworker-webpack-plugin:为网页应用增加离线缓存功能
+
+commonsChunkPlugin:提高打包效率，将第三方库和业务代码分开打包
+
+html-webpack-plugin:可以根据模版自动生成html代码，并自动引用css和js文件
+
+HotModuleRelpacementPlugin:热更新
+
+

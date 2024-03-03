@@ -8,7 +8,7 @@ patchVnode伪代码
 
 ```js
 patchVnode(oldVnode, vnode){
-    const el = vnode.el = oldVnode;
+  const el = vnode.el = oldVnode;
   let i, oldCh = oldVnode.children, ch = vnode.children;
 
   if(oldVnode === vnode) return;

@@ -1,3 +1,6 @@
+参考地址
+https://react.iamkasong.com/
+
 ## React概念
 
 ### [React 组件，元素和实例](https://zh-hans.reactjs.org/blog/2015/12/18/react-components-elements-and-instances.html)
@@ -37,6 +40,9 @@
 
 #### Scheduler（调度器）
 
+浏览器一帧的过程
+![浏览器一帧的过程](./image/浏览器一帧.png)
+
 判断浏览器是否有剩余时间已有API——[requestIdleCallback](https://developer.mozilla.org/zh-CN/docs/Web/API/Window/requestIdleCallback)
 
 但由于以下因素，react放弃使用：
@@ -59,7 +65,6 @@ function workLoopConcurrent() {
 
 更新工作从递归变成了可以中断的循环过程。每次循环都会调用`shouldYield`判断当前是否有剩余时间。
 
-Fiber Reconciler
 
 主要目标：
 
@@ -100,16 +105,16 @@ let root = fiber
 let node = fiber
 while(true){
   // do Something
- if(node.child){
+  if(node.child){
     node = node.child
     continue
   }
   if(node === root){
-  return
+    return
   }
   while(!node.sibling){
     if(node === root || node.return === root){
-   return
+      return
     }
     node = node.return
   }

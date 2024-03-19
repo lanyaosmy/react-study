@@ -122,7 +122,32 @@ function render(vDom, container) {
 }
 ```
 
-### Fiber
+## Fiber
+
+### 问题
+
+Stack Reconciler，主要是为了区别 Fiber Reconciler 取的一个名字。这种方式有一个特点：一旦任务开始进行，就无法中断，那么 js 将一直占用主线程， 一直要等到整棵 Virtual DOM 树计算完成之后，才能把执行权交给渲染引擎，那么这就会导致一些用户交互、动画等任务无法立即得到处理，就会有卡顿，非常的影响用户体验。
+
+问题：任务一旦执行，就无法中断，js 线程一直占用主线程，导致卡顿。
+
+### Fiber是什么
+
+Fiber 是一种数据结构(堆栈帧)，也可以说是一种解决可中断的调用任务的一种解决方案，它的特性就是时间分片(time slicing)和暂停(supense)。
+
+### Fiber是如何工作的呢？
+
+- ReactDOM.render() 和 setState 的时候开始创建更新。
+
+- 将创建的更新加入任务队列，等待调度。
+
+- 在 requestIdleCallback 空闲时执行任务。
+
+- 从根节点开始遍历 Fiber Node，并且构建 WokeInProgress Tree。
+
+- 生成 effectList。
+
+- 根据 EffectList 更新 DOM。
+
 
 reconciler——diff
 

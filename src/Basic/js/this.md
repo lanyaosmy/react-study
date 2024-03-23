@@ -51,9 +51,9 @@ Function.prototype._bind = function (...args) {
   const _this = this;
   const newThis = args[0] || window;
   const newArgs = args.slice(1);
-  return function (...args1) {
+  return function Fn(...args1) {
     return _this.apply(
-      this instanceof _this ? this : newThis, // 作为构造函数new时，指向实例对象
+      this instanceof Fn ? this : newThis, // 作为构造函数new时，指向实例对象
       newArgs.concat(args1),
     );
   };

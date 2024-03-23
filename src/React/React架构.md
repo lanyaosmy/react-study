@@ -1,6 +1,8 @@
 参考地址
 https://react.iamkasong.com/
 
+(React关键核心fiber是什么)[https://blog.csdn.net/leelxp/article/details/108055446?spm=1001.2014.3001.5502]
+
 ## React概念
 
 ### [React 组件，元素和实例](https://zh-hans.reactjs.org/blog/2015/12/18/react-components-elements-and-instances.html)

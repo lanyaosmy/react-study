@@ -291,4 +291,33 @@ var removeDuplicates = function (nums) {
   }
   return i
 };
-console.log();
+
+
+// 438. 找到字符串中所有字母异位词
+var findAnagrams = function (s, p) {
+  let l = 0
+  let r = 0
+  let len = s.length
+  let set = new Set()
+  let result = []
+
+  while (r < len) {
+    let rc = s.charAt(r)
+    if (set.length === p.length) {
+      result.push(l)
+      set.clear()
+    }
+    if (p.indexOf(rc) > -1) {
+      if (!set.has(rc)) {
+        set.add(rc)
+      } else {
+        l++
+      }
+      r++
+    } else {
+      r++
+      l = r
+    }
+  }
+  return result
+};

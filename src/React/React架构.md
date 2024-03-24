@@ -1,7 +1,7 @@
 参考地址
 https://react.iamkasong.com/
 
-(React关键核心fiber是什么)[https://blog.csdn.net/leelxp/article/details/108055446?spm=1001.2014.3001.5502]
+[React关键核心fiber是什么](https://blog.csdn.net/leelxp/article/details/108055446?spm=1001.2014.3001.5502)
 
 ## React概念
 

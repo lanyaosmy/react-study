@@ -1,434 +1,643 @@
-[TOC]
+## why Hook?
 
-## useReducer
+### 在组件之间复用状态逻辑很难
 
-```javascript
-const [state, dispatch] = useReducer(reducer, initialArg, init?)
+React 没有提供将可复用性行为“附加”到组件的途径（例如，把组件连接到 store）。如果你使用过 React 一段时间，你也许会熟悉一些解决此类问题的方案，比如 render props 和 高阶组件。但是这类方案需要重新组织你的组件结构，这可能会很麻烦，使你的代码难以理解。如果你在 React DevTools 中观察过 React 应用，你会发现由 providers，consumers，高阶组件，render props 等其他抽象层组成的组件会形成“嵌套地狱”。尽管我们可以在 DevTools 过滤掉它们，但这说明了一个更深层次的问题：React 需要为共享状态逻辑提供更好的原生途径。
+
+你可以使用 Hook 从组件中提取状态逻辑，使得这些逻辑可以单独测试并复用。Hook 使你在无需修改组件结构的情况下复用状态逻辑。 这使得在组件间或社区内共享 Hook 变得更便捷。
+
+### 复杂组件变得难以理解
+
+我们经常维护一些组件，组件起初很简单，但是逐渐会被状态逻辑和副作用充斥。每个生命周期常常包含一些不相关的逻辑。例如，组件常常在 componentDidMount 和 componentDidUpdate 中获取数据。但是，同一个 componentDidMount 中可能也包含很多其它的逻辑，如设置事件监听，而之后需在 componentWillUnmount 中清除。相互关联且需要对照修改的代码被进行了拆分，而完全不相关的代码却在同一个方法中组合在一起。如此很容易产生 bug，并且导致逻辑不一致。
+
+在多数情况下，不可能将组件拆分为更小的粒度，因为状态逻辑无处不在。这也给测试带来了一定挑战。同时，这也是很多人将 React 与状态管理库结合使用的原因之一。但是，这往往会引入了很多抽象概念，需要你在不同的文件之间来回切换，使得复用变得更加困难。
+
+为了解决这个问题，Hook 将组件中相互关联的部分拆分成更小的函数（比如设置订阅或请求数据），而并非强制按照生命周期划分。你还可以使用 reducer 来管理组件的内部状态，使其更加可预测。
+
+我们将在使用 Effect Hook 中对此展开更多讨论。
+
+### 难以理解的 class
+
+除了代码复用和代码管理会遇到困难外，我们还发现 class 是学习 React 的一大屏障。你必须去理解 JavaScript 中 this 的工作方式，这与其他语言存在巨大差异。还不能忘记绑定事件处理器。没有稳定的语法提案，这些代码非常冗余。大家可以很好地理解 props，state 和自顶向下的数据流，但对 class 却一筹莫展。即便在有经验的 React 开发者之间，对于函数组件与 class 组件的差异也存在分歧，甚至还要区分两种组件的使用场景。
+
+# Hook
+
+Hook 是什么？ Hook 是一个特殊的函数，它可以让你“钩入” React 的特性。例如，useState 是允许你在 React 函数组件中添加 state 的 Hook。稍后我们将学习其他 Hook。
+
+> class 组件中不可以使用 Hook
+
+## [useState](https://zh-hans.reactjs.org/docs/hooks-reference.html#usestate)
+
+替代 class 组件里的 state
+
+```js
+const [当前state, 更新state的函数] = useState(初始值);
 ```
 
-- dispatch函数仅更新下一次渲染的state
-- 通过 ```Object.is()```比较新旧值，如果相同会跳过重新渲染组件和子组件
-- 批量状态更新，updates the screen after all the event handlers have run
+```js
+import React, { useState } from 'react';
 
-第三个参数是初始化函数，调用方式为 ```init(initialArg)```
+function Example() {
+  // 声明一个叫 "count" 的 state 变量
+  const [count, setCount] = useState(0);
 
-不要重复创建初始对象，下面这种写法会在每次render都调用该方法
-
-```javascript
-const [state, dispatch] = useReducer(reducer, createInitialState(username));
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>Click me</button>
+    </div>
+  );
+}
 ```
 
-一个完整例子
+## [useEffect](https://zh-hans.reactjs.org/docs/hooks-reference.html#useeffect)
+
+处理数据获取，设置订阅以及手动更改 React 组件中的 DOM 等副作用
+
+> 可看做 componentDidMount，componentDidUpdate 和 componentWillUnmount 这三个函数的组合。
+
+```js
+import React, { useState, useEffect } from 'react';
+
+function Example() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    document.title = `You clicked ${count} times`;
+  });
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>Click me</button>
+    </div>
+  );
+}
+```
+
+effect 在第一次渲染之后和每次更新之后都会执行。
+
+每次我们重新渲染，都会生成新的 effect，替换掉之前的。某种意义上讲，effect 更像是渲染结果的一部分 —— 每个 effect “属于”一次特定的渲染。
+
+> 与 componentDidMount 或 componentDidUpdate 不同，传给 useEffect 的函数会在浏览器完成布局与绘制之后，在一个延迟事件中被调用。使用 useEffect 调度的 effect 不会阻塞浏览器更新屏幕，这让你的应用看起来响应更快。大多数情况下，effect 不需要同步地执行。在个别情况下（例如测量布局），有单独的 useLayoutEffect Hook 供你使用，其 API 与 useEffect 相同。
+
+### 需要清除的数据源
+
+防止内存泄漏，如订阅外部数据源
+
+方法：返回一个方法用于清除数据
+
+```js
+import React, { useState, useEffect } from 'react';
+
+function FriendStatus(props) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    // Specify how to clean up after this effect:
+    return function cleanup() {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  if (isOnline === null) {
+    return 'Loading...';
+  }
+  return isOnline ? 'Online' : 'Offline';
+}
+```
+
+React 会在组件卸载的时候执行清除操作。
+(事实证明如果每次 render 导致组件卸载，那么每次 render 都会触发清除操作)
+
+#### 为什么每次更新的时候都要运行 Effect
+
+useEffect 默认处理更新的逻辑。
+如果组件依赖外部的 props，在外部 props 更新后，组件并不能及时更新，effect 的这种特性则可以处理这种情况。
+
+### 使用注意点
+
+#### 使用多个 Effect 实现关注点分离
+
+使用 Hook 其中一个目的就是要解决 class 中生命周期函数经常包含不相关的逻辑，但又把相关逻辑分离到了几个不同方法中的问题。
+
+```js
+function FriendStatusWithCounter(props) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    document.title = `You clicked ${count} times`;
+  });
+
+  const [isOnline, setIsOnline] = useState(null);
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+  // ...
+}
+```
+
+React 将按照 effect 声明的顺序依次调用组件中的每一个 effect。
+
+#### 通过跳过 Effect 进行性能优化
+
+如果某些特定值在两次重渲染之间没有发生变化，你可以通知 React 跳过对 effect 的调用，只要传递数组作为 useEffect 的第二个可选参数即可
+
+```js
+useEffect(() => {
+  document.title = `You clicked ${count} times`;
+}, [count]); // 仅在 count 更改时更新
+
+useEffect(() => {
+  function handleStatusChange(status) {
+    setIsOnline(status.isOnline);
+  }
+
+  ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+  return () => {
+    ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+  };
+}, [props.friend.id]); // 仅在 props.friend.id 发生变化时，重新订阅
+```
+
+#### effect 函数内部依赖的变量，最好放在依赖列表里
+
+1. **推荐：把函数放在 effect 内部**
+2. 如果不能：可以
+   - 把函数移到组件外
+   - 纯计算函数：在 effect 之外调用，并让 effect 依赖它的返回值
+   - 把函数加入 effect 的依赖但 把它的定义包裹 进 useCallback Hook
+
+```js
+function ProductPage({ productId }) {
+  // ✅ 用 useCallback 包裹以避免随渲染发生改变
+  const fetchProduct = useCallback(() => {
+    // ... Does something with productId ...
+  }, [productId]); // ✅ useCallback 的所有依赖都被指定了
+
+  return <ProductDetails fetchProduct={fetchProduct} />;
+}
+
+function ProductDetails({ fetchProduct }) {
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]); // ✅ useEffect 的所有依赖都被指定了
+  // ...
+}
+```
+
+### 如果 effect 里有定时器 or 订阅等方法，依赖于某些变量将会导致定时器 or 订阅被不断重置，考虑使用函数式更新 state
+
+```js
+export function IntervalCounter() {
+  const [count, setCount] = useState(0);
+  /**
+   * 定时器会被不断重置
+   */
+  useEffect(() => {
+    console.log('init');
+    const id = setInterval(() => {
+      setCount(count + 1);
+    }, 1000);
+    return () => {
+      console.log('clear');
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [count]);
+  useEffect(() => {
+    console.log('init');
+    const id = setInterval(() => {
+      setCount((c) => c + 1);
+    }, 1000);
+    return () => {
+      console.log('clear');
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <h1>{count}</h1>;
+}
+```
+
+#### 一个 state 依赖另一个 state 的场景
+
+- 尝试用 useReducer 把 state 更新逻辑 移到 effect 之外 [示例链接](https://adamrackis.dev/state-and-use-reducer/)
+- 想要类似 class 中的 this 的功能，你可以 使用一个 ref 来保存一个可变的变量。
+
+## [useContext](https://zh-hans.reactjs.org/docs/hooks-reference.html#usecontext)
 
 ```javascript
-import { useReducer } from 'react';
+const value = useContext(MyContext);
+```
+
+接收一个 context 对象（React.createContext 的返回值）并返回该 context 的当前值。当前的 context 值由上层组件中距离当前组件最近的 <MyContext.Provider> 的 value prop 决定。
+
+当组件上层最近的 <MyContext.Provider> 更新时，该 Hook 会触发重渲染，并使用最新传递给 MyContext provider 的 context value 值。即使祖先使用 React.memo 或 shouldComponentUpdate，也会在组件本身使用 useContext 时重新渲染。
+
+## [useReducer](https://zh-hans.reactjs.org/docs/hooks-reference.html#usereducer)
+
+useState 的替代方案。它接收一个形如 (state, action) => newState 的 reducer，并返回当前的 state 以及与其配套的 dispatch 方法。
+
+```javascript
+const initialState = { count: 0 };
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'incremented_age': {
-      return {
-        name: state.name,
-        age: state.age + 1
-      };
-    }
-    case 'changed_name': {
-      return {
-        name: action.nextName,
-        age: state.age
-      };
-    }
+    case 'increment':
+      return { count: state.count + 1 };
+    case 'decrement':
+      return { count: state.count - 1 };
+    default:
+      throw new Error();
   }
-  throw Error('Unknown action: ' + action.type);
 }
 
-const initialState = { name: 'Taylor', age: 42 };
-
-export default function Form() {
+function Counter() {
   const [state, dispatch] = useReducer(reducer, initialState);
-
-  function handleButtonClick() {
-    dispatch({ type: 'incremented_age' });
-  }
-
-  function handleInputChange(e) {
-    dispatch({
-      type: 'changed_name',
-      nextName: e.target.value
-    }); 
-  }
-
   return (
     <>
-      <input
-        value={state.name}
-        onChange={handleInputChange}
-      />
-      <button onClick={handleButtonClick}>
-        Increment age
+      Count: {state.count}
+      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
+      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
+    </>
+  );
+}
+```
+
+### 惰性初始化
+
+```javascript
+function init(initialCount) {
+  return { count: initialCount };
+}
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'increment':
+      return { count: state.count + 1 };
+    case 'decrement':
+      return { count: state.count - 1 };
+    case 'reset': {
+      return init(action.payload);
+    }
+    default:
+      return state;
+  }
+}
+
+export function Counter({ initialCount }) {
+  const [state, dispatch] = useReducer(reducer, initialCount, init);
+  return (
+    <div>
+      <p>{state.count}</p>
+      <button
+        onClick={() => dispatch({ type: 'reset', payload: initialCount })}
+      >
+        reset
       </button>
-      <p>Hello, {state.name}. You are {state.age}.</p>
-    </>
+      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
+      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
+    </div>
   );
 }
 
+<Counter initialCount={0} />;
 ```
 
-### 自己实现
+### 跳过 dispatch
+
+如果 Reducer Hook 的返回值与当前 state 相同，React 将跳过子组件的渲染及副作用的执行。（React 使用 Object.is 比较算法 来比较 state。）
+
+## [useCallback](https://zh-hans.reactjs.org/docs/hooks-reference.html#usecallback)
 
 ```javascript
-import { useState } from 'react'
-
-export function useReducer(reducer, initialState){
-  const [state, setState] = useState(initialState)
-
-  function dispatch(action){
-    setState((s) => reducer(s, action))
-  }
-
-  return [state, dispatch]
-}
+const memoizedCallback = useCallback(() => {
+  doSomething(a, b);
+}, [a, b]);
 ```
 
-> 可以使用immer来直接修改对象或数组
-> ```import { useImmerReducer } from 'use-immer';```
+返回一个 memoized 回调函数。
 
-## useDeferredValue
+把内联回调函数及依赖项数组作为参数传入 useCallback，它将返回该回调函数的 memoized 版本，该回调函数仅在某个依赖项改变时才会更新。当你把回调函数传递给经过优化的并使用引用相等性去避免非必要渲染（例如 shouldComponentUpdate）的子组件时，它将非常有用。
 
-延迟更新UI的某些部分
+`useCallback(fn, deps)`相当于 `useMemo(() => fn, deps)`。
 
-### 用法
-
-#### 在新内容加载期间显示旧内容
+## [userMemo](https://zh-hans.reactjs.org/docs/hooks-reference.html#usememo)
 
 ```javascript
-export default function App() {
-  const [query, setQuery] = useState('');
-  const deferredQuery = useDeferredValue(query);
+const memoizedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);
+```
+
+返回一个 memoized 值。
+
+把“创建”函数和依赖项数组作为参数传入 useMemo，它仅会在某个依赖项改变时才重新计算 memoized 值。这种优化有助于避免在每次渲染时都进行高开销的计算。
+
+记住，传入 useMemo 的函数会在渲染期间执行。请不要在这个函数内部执行与渲染无关的操作，诸如副作用这类的操作属于 useEffect 的适用范畴，而不是 useMemo。
+
+如果没有提供依赖项数组，useMemo 在每次渲染时都会计算新的值。
+
+## [useRef](https://zh-hans.reactjs.org/docs/hooks-reference.html#useref)
+
+```javascript
+const refContainer = useRef(initialValue);
+```
+
+useRef 返回一个可变的 ref 对象，其 .current 属性被初始化为传入的参数（initialValue）。返回的 ref 对象在组件的整个生命周期内保持不变。
+
+```javascript
+export function TextInputWithFocusButton() {
+  const inputEl = useRef(null);
+  const onButtonClick = () => {
+    inputEl.current.focus();
+  };
   return (
     <>
-      <label>
-        Search albums:
-        <input value={query} onChange={e => setQuery(e.target.value)} />
-      </label>
-      <Suspense fallback={<h2>Loading...</h2>}>
-        <SearchResults query={deferredQuery} />
-      </Suspense>
+      <input type="text" ref={inputEl} />
+      <button onClick={onButtonClick}>focus</button>
     </>
   );
 }
 ```
 
-#### 表明内容已经过时
+可以很方便地**保存任何可变值**，其类似于在 class 中使用实例字段的方式。
 
-加一个视觉提醒
+这是因为它创建的是一个普通 Javascript 对象。而 useRef() 和自建一个 {current: ...} 对象的唯一区别是，useRef 会在每次渲染时返回同一个 ref 对象。
 
-```javascript
-<div style={{
-  opacity: query !== deferredQuery ? 0.5 : 1,
-}}>
-  <SearchResults query={deferredQuery} />
-</div>
-```
+请记住，当 ref 对象内容发生变化时，useRef 并不会通知你。变更 .current 属性不会引发组件重新渲染。
 
-#### 延迟渲染UI的某些部分
-
-UI重新渲染很慢，使用该方法故意减缓渲染速度
-
-用户输入及时更新，但列表的更新会有延时
+如果想要在 React 绑定或解绑 DOM 节点的 ref 时运行某些代码，则需要使用回调 ref 来实现。
 
 ```javascript
-import { useState, useDeferredValue } from 'react';
-import SlowList from './SlowList.js';
+function MeasureExample() {
+  const [height, setHeight] = useState(0);
 
-export default function App() {
-  const [text, setText] = useState('');
-  const deferredText = useDeferredValue(text);
+  const measuredRef = useCallback((node) => {
+    if (node !== null) {
+      setHeight(node.getBoundingClientRect().height);
+    }
+  }, []);
+
   return (
     <>
-      <input value={text} onChange={e => setText(e.target.value)} />
-      <SlowList text={deferredText} />
+      <h1 ref={measuredRef}>Hello, world</h1>
+      <h2>The above header is {Math.round(height)}px tall</h2>
     </>
   );
 }
+```
 
-import { memo } from 'react';
+## 使用规则
 
-const SlowList = memo(function SlowList({ text }) {
-  // 仅打印一次。实际的减速是在 SlowItem 组件内部。
-  console.log('[ARTIFICIALLY SLOW] Rendering 250 <SlowItem />');
+#### 只在最顶层使用 Hook
 
-  let items = [];
-  for (let i = 0; i < 250; i++) {
-    items.push(<SlowItem key={i} text={text} />);
-  }
+不要在循环，条件或嵌套函数中调用 Hook， 确保总是在你的 React 函数的最顶层调用他们。
+
+#### 只在 React 函数中调用 Hook
+
+不要在普通的 JavaScript 函数中调用 Hook。你可以：
+✅ 在 React 的函数组件中调用 Hook
+✅ 在自定义 Hook 中调用其他 Hook
+
+可添加**eslint-plugin-react-hooks**插件来强制检测上述两条规则
+
+React 依赖 Hook 调用的顺序来判断 state 对应的是哪个 useState
+
+```js
+function Example() {
+  // 1. Use the name state variable
+  const [name, setName] = useState('Mary');
+
+  // 2. Use an effect for persisting the form
+  useEffect(function persistForm() {
+    console.log(name);
+  });
+
+  // 3. Use the surname state variable
+  const [surname, setSurname] = useState('Poppins');
+
+  // 4. Use an effect for updating the title
+  useEffect(function updateTitle() {
+    document.title = name + ' ' + surname;
+  });
+
   return (
-    <ul className="items">
-      {items}
-    </ul>
+    <div>
+      <p>You clicked {name} times</p>
+      <button onClick={() => setName('aaa')}>Click me</button>
+    </div>
   );
-});
+}
 ```
 
-## useTransition
+原理图解
+![hook数组](https://img-blog.csdnimg.cn/20200317170911425.jpeg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xhbnlhbzk2MTIyMA==,size_16,color_FFFFFF,t_70)
 
-不阻塞 UI 的情况下来更新状态
+如上图我们根据调用 hook 顺序，将 hook 依次存入数组 memoizedState 中，每次存入时都是将当前的 currentcursor 作为数组的下标，将其传入的值作为数组的值，然后在累加 currentcursor，所以 hook 的状态值都被存入数组中 memoizedState。
+![更新操作](https://img-blog.csdnimg.cn/20200317171005768.jpeg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xhbnlhbzk2MTIyMA==,size_16,color_FFFFFF,t_70)
+上面状态更新图，我们可以看到执行 setCount(count + 1)或 setData(data + 2)时，先将旧数组 memoizedState 中对应的值取出来重新复值，从而生成新数组 memoizedState。对于是否执行 useEffect 通过判断其第二个参数是否发生变化而决定的。
 
-```javascript
-const [isPending, startTransition] = useTransition()
+## 自定义 Hook
+
+通过自定义 Hook，可以将组件逻辑提取到可重用的函数中。
+在 React 中有两种流行的方式来共享组件之间的状态逻辑: render props 和高阶组件
+
+#### render Props
+
+具有 render prop 的组件接受一个函数，该函数返回一个 React 元素并调用它而不是实现自己的渲染逻辑。
+
+```js
+<DataProvider render={(data) => <h1>Hello {data.target}</h1>} />
 ```
 
-返回值
+render prop 是一个用于告知组件需要渲染什么内容的函数 prop。
 
-1. isPending: 是否存在待处理的转换
-2. startTransition函数: 可将状态更新标记为转换状态
+```js
+class Cat extends React.Component {
+  render() {
+    const mouse = this.props.mouse;
+    return (
+      <img
+        src="/cat.jpg"
+        style={{ position: 'absolute', left: mouse.x, top: mouse.y }}
+      />
+    );
+  }
+}
 
-### 用法
+class Mouse extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.state = { x: 0, y: 0 };
+  }
 
-- 将状态更新标记为非阻塞转换状态
-
-```javascript
-function TabContainer() {
-  const [isPending, startTransition] = useTransition();
-  const [tab, setTab] = useState('about');
-
-  function selectTab(nextTab) {
-    startTransition(() => {
-      setTab(nextTab);
+  handleMouseMove(event) {
+    this.setState({
+      x: event.clientX,
+      y: event.clientY,
     });
   }
-  // ...
+
+  render() {
+    return (
+      <div style={{ height: '100%' }} onMouseMove={this.handleMouseMove}>
+        {/*
+          Instead of providing a static representation of what <Mouse> renders,
+          use the `render` prop to dynamically determine what to render.
+        */}
+        {this.props.render(this.state)}
+      </div>
+    );
+  }
+}
+
+class MouseTracker extends React.Component {
+  render() {
+    return (
+      <div>
+        <h1>移动鼠标!</h1>
+        <Mouse render={(mouse) => <Cat mouse={mouse} />} />
+      </div>
+    );
+  }
 }
 ```
 
-转换状态可以使用户界面更新在慢速设备上仍保持响应性。
+任何被用于告知组件需要渲染什么内容的函数 prop 在技术上都可以被称为 “render prop”。不一定要使用名为 render 的
 
-通过转换状态，在重新渲染过程中你的用户界面保持响应。例如，如果用户单击一个选项卡，但改变了主意并单击另一个选项卡，他们可以在不等待第一个重新渲染完成的情况下完成操作。
+#### 高阶组件
 
-## useRef
-
-ref 和 state 的不同之处
-| ref                                                   | state                                                                                    |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| useRef(initialValue)返回 { current: initialValue }    | useState(initialValue) 返回 state 变量的当前值和一个 state 设置函数 ( [value, setValue]) |
-| 更改时不会触发重新渲染                                | 更改时触发重新渲染。                                                                     |
-| 可变 —— 你可以在渲染过程之外修改和更新 current 的值。 | “不可变” —— 你必须使用 state 设置函数来修改 state 变量，从而排队重新渲染。               |
-| 你不应在渲染期间读取（或写入） current 值。           | 你可以随时读取 state。但是，每次渲染都有自己不变的 state 快照。                          |
-
-原则上 useRef 可以在 useState 的基础上 实现。 你可以想象在 React 内部，useRef 是这样实现的：
+#### 自定义 Hook 示例
 
 ```js
-// React 内部
-function useRef(initialValue) {
-  const [ref, unused] = useState({ current: initialValue });
-  return ref;
+import { useState, useEffect } from 'react';
+
+function useFriendStatus(friendID) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(friendID, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(friendID, handleStatusChange);
+    };
+  });
+
+  return isOnline;
 }
-```
 
-### 何时使用 ref
+function FriendStatus(props) {
+  const isOnline = useFriendStatus(props.friend.id);
 
-- 存储 timeout ID
-- 存储和操作 DOM 元素
-- 存储不需要被用来计算 JSX 的其他对象。
-如果你的组件需要存储一些值，但不影响渲染逻辑，请选择 ref。
-
-### 使用flushSync立即同步更新DOM
-
-```js
-setTodos([ ...todos, newTodo]);
-listRef.current.lastChild.scrollIntoView();
-```
-
-在setState后立即操作DOM
-
-从 react-dom 导入 flushSync 并将 state 更新包裹 到 flushSync 调用中
-
-```js
-flushSync(() => {
-  setTodos([ ...todos, newTodo]);
-});
-listRef.current.lastChild.scrollIntoView();
-```
-
-## useState
-
-渲染会及时生成一张快照
-当 React 重新渲染一个组件时：
-
-- React 会再次调用你的函数
-- 函数会返回新的 JSX 快照
-- React 会更新界面以匹配返回的快照
-
-```js
-export default function Counter() {
-  const [number, setNumber] = useState(0);
+  if (isOnline === null) {
+    return 'Loading...';
+  }
+  return isOnline ? 'Online' : 'Offline';
+}
+function FriendListItem(props) {
+  const isOnline = useFriendStatus(props.friend.id);
 
   return (
-    <>
-      <h1>{number}</h1>
-      <button onClick={() => {
-        setNumber(number + 5);
-        setTimeout(() => {
-          alert(number); //0
-        }, 3000); 
-      }}>+5</button>
-    </>
-  )
+    <li style={{ color: isOnline ? 'green' : 'black' }}>{props.friend.name}</li>
+  );
 }
 ```
 
-一个 state 变量的值永远不会在一次渲染的内部发生变化
-React 会使 state 的值始终”固定“在一次渲染的各个事件处理函数内部
+## 使用 Hook 的轮子
 
-### React 会对 state 更新进行批处理
+#### 1 使用 Hook 请求异步数据
 
-React 会等到事件处理函数中的 所有 代码都运行完毕再处理你的 state 更新
+[使用 Hook 请求异步数据](https://segmentfault.com/a/1190000020798092?utm_source=tag-newest)
 
-#### 多次更新同一个State
+#### 2 记录上次的值——使用 useRef
 
 ```js
-export default function Counter() {
-  const [number, setNumber] = useState(0);
-
+function Counter() {
+  const [count, setCount] = useState(0);
+  const prevCount = usePrevious(count);
   return (
-    <>
-      <h1>{number}</h1>
-      <button onClick={() => {
-        setNumber(n => n + 1);
-        setNumber(n => n + 1);
-        setNumber(n => n + 1);
-        // 3
-      }}>+3</button>
-    </>
-  )
-}
-```
-
-react将```n => n + 1```三次加入更新队列
-
-#### 在替换后更新state
-
-```js
- <button onClick={() => {
-  setNumber(number +5);
-  setNumber(n => n + 1);
-  // 6
-}}>+</button>
-```
-
-1. setNumber(number + 5)：number 为 0，所以 setNumber(0 + 5)。React 将 “替换为 5” 添加到其队列中。
-2. setNumber(n => n + 1)：n => n + 1 是一个更新函数。 React 将 该函数 添加到其队列中。
-
-以下是你可以考虑传递给 setNumber state 设置函数的内容：
-
-- 一个更新函数（例如：n => n + 1）会被添加到队列中。
-- 任何其他的值（例如：数字 5）会导致“替换为 5”被添加到队列中，已经在队列中的内容会被忽略。
-
-## useEffect
-
-useEffect 会在屏幕更新渲染之后执行
-React 总是在执行下一轮渲染的 Effect 之前清理上一轮渲染的 Effect
-如果 React 的所有依赖项都与上次渲染时的值相同，则将跳过本次 Effect。使用`Object.is()`判断
-每一轮渲染都有自己的 Effect
-React 将在下次 Effect 运行之前以及卸载期间这两个时候调用清理函数。
-
-### Effect中请求数据
-
-缺点：
-
-- Effect 不能在服务端执行
-- 直接在 Effect 中获取数据容易产生网络瀑布（network waterfall）
-- 直接在 Effect 中获取数据通常意味着无法预加载或缓存数据
-- [人机竞争](https://maxrozen.com/race-conditions-fetching-data-react-with-useeffect)
-
-请考虑使用或构建客户端缓存。
-目前受欢迎的开源解决方案是 React Query(<https://tanstack.com/query/latest/docs/framework/react/overview)、useSWR(https://zhuanlan.zhihu.com/p/93824106?utm_id=0>) 和 React Router v6.4+。你也可以构建自己的解决方案，在这种情况下，你可以在幕后使用 Effect，但是请注意添加用于删除重复请求、缓存响应和避免网络瀑布（通过预加载数据或将数据需求提升到路由）的逻辑。
-
-### 如何移除不必要的 Effect
-
-- 不必使用 Effect 来转换渲染所需的数据 ==> 直接计算
-
-如果一个值可以基于现有的 props 或 state 计算得出，不要把它作为一个 state，而是在渲染期间直接计算这个值
-
-- 缓存昂贵的计算 ==> 使用useMemo
-
-```js
-// ✅ 除非 todos 或 filter 发生变化，否则不会重新执行 getFilteredTodos()
-  const visibleTodos = useMemo(() => getFilteredTodos(todos, filter), [todos, filter]);
-```
-
-- 当 props 变化时重置所有 state ==> 父组件使用Key
-
-```js
-export default function ProfilePage({ userId }) {
-  return (
-    <Profile
-      userId={userId}
-      key={userId}
-    />
+    <h1>
+      Now: {count}, before: {prevCount}
+      <button onClick={() => setCount(count + 1)}>增加 count</button>
+      <button onClick={() => setCount(count - 1)}>减少 count</button>
+    </h1>
   );
 }
 
-function Profile({ userId }) {
-  // ✅ 当 key 变化时，该组件内的 comment 或其他 state 会自动被重置
-  const [comment, setComment] = useState('');
-  // ...
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
 }
 ```
 
-- 当 prop 变化时调整部分 state ==> 在渲染期间直接调整 state
+## 简单实现的 Hook
 
 ```js
-function List({ items }) {
-  const [isReverse, setIsReverse] = useState(false);
-  const [selection, setSelection] = useState(null);
+let memorizedState = [];
+let cursor = 0;
 
-  // 🔴 避免：当 prop 变化时，在 Effect 中调整 state
-  useEffect(() => {
-    setSelection(null);
-  }, [items]);
-
-  // 好一些：在渲染期间调整 state
-  const [prevItems, setPrevItems] = useState(items);
-  if (items !== prevItems) {
-    setPrevItems(items);
-    setSelection(null);
+function useState(initialState) {
+  memorizedState[cursor] =
+    memorizedState[cursor] === undefined
+      ? initialState
+      : memorizedState[cursor];
+  function setState(value) {
+    memorizedState[cursor] = value;
+    render();
   }
-  // ...
+  return [memorizedState[cursor++], setState];
 }
-```
-
-- 在事件处理函数中共享逻辑
-
-```js
-function ProductPage({ product, addToCart }) {
-  // 🔴 避免：在 Effect 中处理属于事件特定的逻辑
-  useEffect(() => {
-    if (product.isInCart) {
-      showNotification(`已添加 ${product.name} 进购物车！`);
-    }
-  }, [product]);
-
-  // ✅ 非常好：事件特定的逻辑在事件处理函数中处理
-  function buyProduct() {
-    addToCart(product);
-    showNotification(`已添加 ${product.name} 进购物车！`);
+function useEffect(callback, dep) {
+  let prevDep = memorizedState[cursor];
+  let isSame = prevDep && dep ? dep.every((v, i) => v === prevDep[i]) : false;
+  if (!isSame && typeof callback === 'function') {
+    callback();
+    memorizedState[cursor] = dep;
   }
-
-  function handleBuyClick() {
-    buyProduct();
-  }
-
-  function handleCheckoutClick() {
-    buyProduct();
-    navigateTo('/checkout');
-  }
-  // ...
+  cursor++;
 }
+
+function App() {
+  const [count, setCount] = useState(1);
+  useEffect(() => {
+    console.log(111);
+  }, [count]);
+  cursor = 0;
+  return (
+    <div>
+      {count}
+      <button
+        onClick={() => {
+          setCount(count + 1);
+        }}
+      >
+        点击
+      </button>
+    </div>
+  );
+}
+
+function render() {
+  ReactDOM.render(<App />, document.getElementById('root'));
+}
+
+render();
 ```
-
-- 链式计算,链接多个 Effect，每个 Effect 都基于某些 state 来调整其他的 state ==> 尽可能在渲染期间进行计算，以及在事件处理函数中调整 state
-
-- 初始化应用,有些逻辑只需要在应用加载时执行一次。 ==> 添加一个顶层变量来记录它是否已经执行过了\可以在模块初始化和应用渲染之前执行它
-- 通知父组件有关 state 变化的信息 ==> 状态提升
-- 将数据传递给父组件 ==> 向子组件传递数据
-- 订阅外部 store ==> useSyncExternalStore

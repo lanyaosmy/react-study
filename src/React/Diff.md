@@ -108,6 +108,10 @@ function reconcileSingleElement(
 - 当`child !== null`且`key相同`且`type不同`时执行`deleteRemainingChildren`将`child`及其兄弟`fiber`都标记删除。
 - 当`child !== null`且`key不同`时仅将`child`标记删除。
 
+当key相同且type不同时，代表我们已经找到本次更新的p对应的上次的fiber，但是p与li type不同，不能复用。既然唯一的可能性已经不能复用，则剩下的fiber都没有机会了，所以都需要标记删除。
+
+当key不同时只代表遍历到的该fiber不能被p复用，后面还有兄弟fiber还没有遍历到。所以仅仅标记该fiber删除。
+
 #### 多节点Diff
 
 情况：
@@ -136,7 +140,28 @@ function reconcileSingleElement(
 // reconcileChildrenArray
 ```
 
+#### 移动节点的算法
+
+```javascript
+
+newChildren === dabc，没用完，不需要执行删除旧节点
+oldFiber === abcd，没用完，不需要执行插入新节点
+
+将剩余oldFiber（abcd）保存为map
+
+继续遍历剩余newChildren
+
+lastPlacedIndex代表最后一个可复用的节点在oldFiber中的位置索引
+oldIndex表示遍历到的可复用节点在oldFiber中的位置索引
+
+如果 oldIndex >= lastPlacedIndex 代表该可复用节点不需要移动
+并将 lastPlacedIndex = oldIndex;
+如果 oldIndex < lastPlacedIndex 该可复用节点之前插入的位置索引小于这次更新需要插入的位置索引，代表该节点需要向右移动
+```
+
 ## 状态更新
+
+每次状态更新都会创建一个保存更新状态相关内容的对象，我们叫他Update。在render阶段的beginWork中会根据Update计算新的state。
 
 ```sh
 触发状态更新（根据场景调用不同方法）
@@ -171,3 +196,31 @@ render阶段（`performSyncWorkOnRoot` 或 `performConcurrentWorkOnRoot`）
 
 commit阶段（`commitRoot`）
 ```
+
+触发更新的方法所隶属的组件分类：
+
+ReactDOM.render —— HostRoot
+
+this.setState —— ClassComponent
+
+this.forceUpdate —— ClassComponent
+
+useState —— FunctionComponent
+
+useReducer —— FunctionComponent
+
+### Update与Fiber的联系
+
+Fiber节点上的多个Update会组成链表并被包含在fiber.updateQueue中。
+
+## ReactDOM.render发生了什么
+
+1. 创建Fiber
+2. 创建RootFiber
+3. 创建Update
+4. 从Fiber到Root
+5. 调度更新
+6. render阶段
+7. commit阶段
+8. 渲染
+9. 重复以上步骤

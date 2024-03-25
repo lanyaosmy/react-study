@@ -641,3 +641,11 @@ function render() {
 
 render();
 ```
+
+## TODO Hook原理
+
+hook与FunctionComponent fiber都存在memoizedState属性，不要混淆他们的概念。
+
+fiber.memoizedState：FunctionComponent对应fiber保存的Hooks链表。
+
+hook.memoizedState：Hooks链表中保存的单一hook对应的数据。
